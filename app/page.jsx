@@ -115,7 +115,10 @@ export default function PublicTasks() {
         <div>
           <span className="public-badge">Consulta publica</span>
           <div className="public-title">
-            <div className="brand-mark brand-text">Gestao TI</div>
+            <div className="brand-mark brand-text">
+              <span className="brand-text-top">Gestão</span>
+              <span className="brand-text-bottom">TI</span>
+            </div>
             <h1>Painel de Tarefas</h1>
           </div>
           <p className="muted">Visualize as atividades registradas da loja.</p>

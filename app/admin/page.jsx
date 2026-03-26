@@ -372,7 +372,10 @@ export default function TaskAdmin() {
     <main className="dashboard">
       <aside className="sidebar">
         <div className="sidebar-brand">
-          <div className="brand-mark brand-text">Gestao TI</div>
+          <div className="brand-mark brand-text">
+            <span className="brand-text-top">Gestão</span>
+            <span className="brand-text-bottom">TI</span>
+          </div>
           <div>
             <h2>Painel de Tarefas</h2>
             <p className="muted">Acesso unico da equipe</p>

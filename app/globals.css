@@ -133,6 +133,20 @@ textarea {
   line-height: 1.1;
   background: linear-gradient(135deg, rgba(34, 211, 238, 0.25), rgba(249, 115, 22, 0.18));
   color: #1f2937;
+  display: grid;
+  place-items: center;
+  gap: 2px;
+}
+
+.brand-text-top {
+  font-size: 11px;
+  letter-spacing: 0.4px;
+}
+
+.brand-text-bottom {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
 }
 
 .menu {
