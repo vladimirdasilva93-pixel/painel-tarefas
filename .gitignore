@@ -4,3 +4,4 @@ node_modules
 .env
 out
 *.log
+_backup-2026-03-26/
