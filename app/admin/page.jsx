@@ -15,7 +15,7 @@ const initialForm = {
 
 export default function AdminPage() {
   const [session, setSession] = useState(null);
-  const [email, setEmail] = useState("");
+  const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [form, setForm] = useState(initialForm);
   const [students, setStudents] = useState([]);
@@ -92,8 +92,25 @@ export default function AdminPage() {
     e.preventDefault();
     setLoading(true);
     setMessage("");
+    const raw = loginId.trim();
+    let emailToUse = raw;
+    if (!raw.includes("@")) {
+      const response = await fetch("/api/resolve-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: raw })
+      });
+      if (!response.ok) {
+        setMessage("Usuário não encontrado.");
+        setLoading(false);
+        return;
+      }
+      const data = await response.json();
+      emailToUse = data.email;
+    }
+
     const { error } = await supabase.auth.signInWithPassword({
-      email,
+      email: emailToUse,
       password
     });
     if (error) {
@@ -147,22 +164,28 @@ export default function AdminPage() {
           <h2 className="section-title">Login do Administrador</h2>
           <p className="muted">Somente administradores podem cadastrar ou excluir alunos.</p>
           <form onSubmit={signIn} className="grid-2">
-            <input
-              className="input"
-              type="email"
-              placeholder="Email do admin"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <input
-              className="input"
-              type="password"
-              placeholder="Senha"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <div>
+              <label>Usuário</label>
+              <input
+                className="input"
+                type="text"
+                placeholder="Ex: ngcursos"
+                value={loginId}
+                onChange={(e) => setLoginId(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label>Senha</label>
+              <input
+                className="input"
+                type="password"
+                placeholder="Digite sua senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
             <div className="actions">
               <button className="button" type="submit" disabled={loading}>
                 {loading ? "Entrando..." : "Entrar"}
