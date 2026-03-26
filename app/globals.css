@@ -122,8 +122,8 @@ textarea {
 }
 
 .brand-text {
-  width: 68px;
-  height: 68px;
+  width: 84px;
+  height: 84px;
   border-radius: 14px;
   font-size: 11px;
   letter-spacing: 0.3px;
@@ -139,12 +139,12 @@ textarea {
 }
 
 .brand-text-top {
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.4px;
 }
 
 .brand-text-bottom {
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 700;
   letter-spacing: 1px;
 }
