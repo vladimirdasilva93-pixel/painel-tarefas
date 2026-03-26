@@ -10,6 +10,7 @@ export default function PublicPage() {
   const [query, setQuery] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const filtered = filteredStudents(students, query, dateFrom, dateTo);
 
   useEffect(() => {
     let isMounted = true;
@@ -66,6 +67,14 @@ export default function PublicPage() {
           onChange={(e) => setDateTo(e.target.value)}
         />
         <button
+          className="button"
+          type="button"
+          onClick={() => exportCsv(filtered)}
+          disabled={filtered.length === 0}
+        >
+          Exportar CSV
+        </button>
+        <button
           className="button ghost"
           type="button"
           onClick={() => {
@@ -91,7 +100,7 @@ export default function PublicPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredStudents(students, query, dateFrom, dateTo).map((student) => (
+              {filtered.map((student) => (
                 <tr key={student.id}>
                   <td>{student.nome}</td>
                   <td>{formatDate(student.data_fim)}</td>
@@ -128,4 +137,33 @@ function filteredStudents(students, query, dateFrom, dateTo) {
     const toOk = to ? endDate <= to : true;
     return nameOk && fromOk && toOk;
   });
+}
+
+function exportCsv(rows) {
+  const header = ["Nome", "Data de conclusão"];
+  const lines = rows.map((row) => [
+    String(row.nome ?? ""),
+    formatDate(row.data_fim)
+  ]);
+  const csv = [header, ...lines]
+    .map((cols) => cols.map(escapeCsv).join(","))
+    .join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "lista-alunos.csv";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function escapeCsv(value) {
+  const text = String(value ?? "");
+  if (text.includes(",") || text.includes("\"") || text.includes("\n")) {
+    return `"${text.replace(/"/g, "\"\"")}"`;
+  }
+  return text;
 }
