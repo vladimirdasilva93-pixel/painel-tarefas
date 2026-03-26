@@ -122,8 +122,8 @@ textarea {
 }
 
 .brand-text {
-  width: 56px;
-  height: 56px;
+  width: 68px;
+  height: 68px;
   border-radius: 14px;
   font-size: 11px;
   letter-spacing: 0.3px;
@@ -131,8 +131,8 @@ textarea {
   text-align: center;
   padding: 6px;
   line-height: 1.1;
-  background: linear-gradient(135deg, rgba(34, 211, 238, 0.25), rgba(249, 115, 22, 0.18));
-  color: #1f2937;
+  background: #0b0b0f;
+  color: #ffffff;
   display: grid;
   place-items: center;
   gap: 2px;
@@ -144,7 +144,7 @@ textarea {
 }
 
 .brand-text-bottom {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
   letter-spacing: 1px;
 }
