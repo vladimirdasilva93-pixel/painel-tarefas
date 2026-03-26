@@ -8,6 +8,8 @@ export default function PublicPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -51,6 +53,29 @@ export default function PublicPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
+        <input
+          className="input"
+          type="date"
+          value={dateFrom}
+          onChange={(e) => setDateFrom(e.target.value)}
+        />
+        <input
+          className="input"
+          type="date"
+          value={dateTo}
+          onChange={(e) => setDateTo(e.target.value)}
+        />
+        <button
+          className="button ghost"
+          type="button"
+          onClick={() => {
+            setQuery("");
+            setDateFrom("");
+            setDateTo("");
+          }}
+        >
+          Limpar filtros
+        </button>
       </div>
       {loading && <p>Carregando...</p>}
       {error && <p className="muted">{error}</p>}
@@ -66,7 +91,7 @@ export default function PublicPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredStudents(students, query).map((student) => (
+              {filteredStudents(students, query, dateFrom, dateTo).map((student) => (
                 <tr key={student.id}>
                   <td>{student.nome}</td>
                   <td>{formatDate(student.data_fim)}</td>
@@ -87,10 +112,20 @@ function formatDate(value) {
   return date.toLocaleDateString("pt-BR");
 }
 
-function filteredStudents(students, query) {
+function filteredStudents(students, query, dateFrom, dateTo) {
   const term = query.trim().toLowerCase();
-  if (!term) return students;
-  return students.filter((student) =>
-    String(student.nome ?? "").toLowerCase().includes(term)
-  );
+  const from = dateFrom ? new Date(dateFrom) : null;
+  const to = dateTo ? new Date(dateTo) : null;
+
+  return students.filter((student) => {
+    const nameOk = term
+      ? String(student.nome ?? "").toLowerCase().includes(term)
+      : true;
+    if (!from && !to) return nameOk;
+    const endDate = student.data_fim ? new Date(student.data_fim) : null;
+    if (!endDate || Number.isNaN(endDate.getTime())) return false;
+    const fromOk = from ? endDate >= from : true;
+    const toOk = to ? endDate <= to : true;
+    return nameOk && fromOk && toOk;
+  });
 }
