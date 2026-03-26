@@ -22,6 +22,11 @@ const responsaveis = [
   "Jarlei Coelho"
 ];
 
+const pdvOptions = Array.from({ length: 40 }, (_, index) => {
+  const num = String(index + 1).padStart(2, "0");
+  return `PDV ${num}`;
+});
+
 const emptyForm = {
   titulo: "",
   descricao: "",
@@ -523,13 +528,28 @@ export default function TaskAdmin() {
             </div>
             <div>
               <label>Titulo da tarefa</label>
-              <input
-                className="input"
-                placeholder="Ex: Trocar bobina do PDV 02"
-                value={form.titulo}
-                onChange={(event) => setForm({ ...form, titulo: event.target.value })}
-                required
-              />
+              {form.categoria === "pdv" ? (
+                <select
+                  className="select"
+                  value={form.titulo || pdvOptions[0]}
+                  onChange={(event) => setForm({ ...form, titulo: event.target.value })}
+                  required
+                >
+                  {pdvOptions.map((pdv) => (
+                    <option key={pdv} value={pdv}>
+                      {pdv}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  className="input"
+                  placeholder="Ex: Trocar bobina do PDV 02"
+                  value={form.titulo}
+                  onChange={(event) => setForm({ ...form, titulo: event.target.value })}
+                  required
+                />
+              )}
             </div>
             <div>
               <label>Status</label>
@@ -550,7 +570,16 @@ export default function TaskAdmin() {
               <select
                 className="select"
                 value={form.categoria}
-                onChange={(event) => setForm({ ...form, categoria: event.target.value })}
+                onChange={(event) => {
+                  const nextCategoria = event.target.value;
+                  setForm((prev) => {
+                    if (nextCategoria === "pdv") {
+                      const nextTitulo = pdvOptions.includes(prev.titulo) ? prev.titulo : pdvOptions[0];
+                      return { ...prev, categoria: nextCategoria, titulo: nextTitulo };
+                    }
+                    return { ...prev, categoria: nextCategoria };
+                  });
+                }}
               >
                 {categories.map((item) => (
                   <option key={item.id} value={item.id}>
