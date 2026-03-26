@@ -69,7 +69,10 @@ export default function PublicTasks() {
       <header className="public-hero">
         <div>
           <span className="public-badge">Consulta publica</span>
-          <h1>Painel de Tarefas</h1>
+          <div className="public-title">
+            <img src="/vl-logo.png" alt="VL Tecnologia" />
+            <h1>Painel de Tarefas</h1>
+          </div>
           <p className="muted">Visualize as atividades registradas da loja.</p>
         </div>
         <a className="button admin-link" href="/admin">Acesso Administrativo</a>
