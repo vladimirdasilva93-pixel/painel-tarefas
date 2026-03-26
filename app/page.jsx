@@ -60,6 +60,10 @@ export default function PublicTasks() {
     return true;
   });
 
+  function handleExport() {
+    exportCsv(filteredTasks, categoryMeta?.label ?? "tarefas");
+  }
+
   return (
     <main className="public-page">
       <header className="public-hero">
@@ -114,6 +118,9 @@ export default function PublicTasks() {
                   </option>
                 ))}
               </select>
+              <button className="button ghost" type="button" onClick={handleExport}>
+                Exportar Excel
+              </button>
             </div>
           </div>
 
@@ -173,4 +180,58 @@ function formatDate(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
   return date.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+}
+
+function exportCsv(rows, label) {
+  const header = [
+    "Categoria",
+    "Titulo",
+    "Descricao",
+    "Comentario",
+    "Status",
+    "Criado em"
+  ];
+  const lines = rows.map((row) => [
+    categoryLabel(row.categoria),
+    String(row.titulo ?? ""),
+    String(row.descricao ?? ""),
+    String(row.comentario ?? ""),
+    statusLabel(row.status),
+    formatDate(row.created_at)
+  ]);
+
+  const csv = [header, ...lines]
+    .map((cols) => cols.map(escapeCsv).join(";"))
+    .join("\n");
+
+  const bom = "\uFEFF";
+  const blob = new Blob([bom + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  const safeLabel = String(label ?? "tarefas")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+  link.href = url;
+  link.download = `tarefas-${safeLabel}-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function escapeCsv(value) {
+  const text = String(value ?? "");
+  if (text.includes(";") || text.includes("\"") || text.includes("\n")) {
+    return `"${text.replace(/"/g, "\"\"")}"`;
+  }
+  return text;
+}
+
+function categoryLabel(value) {
+  return categories.find((item) => item.id === value)?.label ?? String(value ?? "");
+}
+
+function statusLabel(value) {
+  return statusOptions.find((item) => item.id === value)?.label ?? String(value ?? "");
 }
