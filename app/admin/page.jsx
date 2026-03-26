@@ -63,6 +63,10 @@ export default function TaskAdmin() {
     () => categories.find((item) => item.id === activeCategory),
     [activeCategory]
   );
+  const randomColor = useMemo(() => {
+    const channel = () => Math.floor(Math.random() * 206) + 30;
+    return `rgb(${channel()}, ${channel()}, ${channel()})`;
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -372,9 +376,7 @@ export default function TaskAdmin() {
     <main className="dashboard">
       <aside className="sidebar">
         <div className="sidebar-brand">
-          <div className="brand-mark">
-            <img src="/vl-logo.png" alt="VL Tecnologia" />
-          </div>
+          <div className="brand-mark" style={{ background: randomColor }} />
           <div>
             <h2>Painel de Tarefas</h2>
             <p className="muted">Acesso unico da equipe</p>
