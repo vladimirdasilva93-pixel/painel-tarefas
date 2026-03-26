@@ -16,10 +16,17 @@ const statusOptions = [
   { id: "concluido", label: "Concluido" }
 ];
 
+const responsaveis = [
+  "Vladimir Borges",
+  "Hugo de Carvalho",
+  "Jarlei Coelho"
+];
+
 const emptyForm = {
   titulo: "",
   descricao: "",
   comentario: "",
+  responsavel: responsaveis[0],
   status: "pendente",
   categoria: "pdv",
   files: []
@@ -34,8 +41,14 @@ export default function TaskAdmin() {
 
   const [tasks, setTasks] = useState([]);
   const [activeCategory, setActiveCategory] = useState("pdv");
+  const [activeView, setActiveView] = useState("painel");
   const [statusFilter, setStatusFilter] = useState("todos");
+  const [responsavelFilter, setResponsavelFilter] = useState("todos");
   const [query, setQuery] = useState("");
+  const [historyTasks, setHistoryTasks] = useState([]);
+  const [historyCategory, setHistoryCategory] = useState("todas");
+  const [historyQuery, setHistoryQuery] = useState("");
+  const [historyResponsavel, setHistoryResponsavel] = useState("todos");
   const [form, setForm] = useState(emptyForm);
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -65,16 +78,21 @@ export default function TaskAdmin() {
   useEffect(() => {
     if (!session) {
       setTasks([]);
+      setHistoryTasks([]);
       return;
     }
-    loadTasks();
-  }, [session, activeCategory]);
+    if (activeView === "historico") {
+      loadHistory();
+    } else {
+      loadTasks();
+    }
+  }, [session, activeCategory, activeView, historyCategory]);
 
   async function loadTasks() {
     setMessage("");
     const { data, error } = await supabase
       .from("tasks")
-      .select("id, titulo, descricao, comentario, status, categoria, fotos, created_at, updated_at")
+      .select("id, titulo, descricao, comentario, responsavel, status, categoria, fotos, created_at, updated_at")
       .eq("categoria", activeCategory)
       .order("created_at", { ascending: false });
 
@@ -83,6 +101,27 @@ export default function TaskAdmin() {
       return;
     }
     setTasks(data ?? []);
+  }
+
+  async function loadHistory() {
+    setMessage("");
+    let queryBuilder = supabase
+      .from("tasks")
+      .select("id, titulo, descricao, comentario, responsavel, status, categoria, fotos, created_at, updated_at")
+      .eq("status", "concluido")
+      .order("updated_at", { ascending: false });
+
+    if (historyCategory !== "todas") {
+      queryBuilder = queryBuilder.eq("categoria", historyCategory);
+    }
+
+    const { data, error } = await queryBuilder;
+
+    if (error) {
+      setMessage("Nao foi possivel carregar o historico.");
+      return;
+    }
+    setHistoryTasks(data ?? []);
   }
 
   async function signIn(event) {
@@ -133,6 +172,10 @@ export default function TaskAdmin() {
       setMessage("Informe um titulo para a tarefa.");
       return;
     }
+    if (!form.responsavel) {
+      setMessage("Selecione o responsavel pela tarefa.");
+      return;
+    }
 
     setSaving(true);
     setMessage("");
@@ -150,6 +193,7 @@ export default function TaskAdmin() {
             titulo: form.titulo,
             descricao: form.descricao,
             comentario: form.comentario,
+            responsavel: form.responsavel,
             status: form.status,
             categoria: form.categoria,
             fotos: photoUrls,
@@ -171,6 +215,7 @@ export default function TaskAdmin() {
           titulo: form.titulo,
           descricao: form.descricao,
           comentario: form.comentario,
+          responsavel: form.responsavel,
           status: form.status,
           categoria: form.categoria,
           fotos: photoUrls,
@@ -225,6 +270,7 @@ export default function TaskAdmin() {
       titulo: task.titulo ?? "",
       descricao: task.descricao ?? "",
       comentario: task.comentario ?? "",
+      responsavel: task.responsavel ?? responsaveis[0],
       status: task.status ?? "pendente",
       categoria: task.categoria ?? activeCategory,
       files: []
@@ -245,6 +291,7 @@ export default function TaskAdmin() {
 
   const filteredTasks = tasks.filter((task) => {
     if (statusFilter !== "todos" && task.status !== statusFilter) return false;
+    if (responsavelFilter !== "todos" && task.responsavel !== responsavelFilter) return false;
     if (query.trim()) {
       const term = query.trim().toLowerCase();
       return (
@@ -256,8 +303,25 @@ export default function TaskAdmin() {
     return true;
   });
 
+  const filteredHistory = historyTasks.filter((task) => {
+    if (historyResponsavel !== "todos" && task.responsavel !== historyResponsavel) return false;
+    if (historyQuery.trim()) {
+      const term = historyQuery.trim().toLowerCase();
+      return (
+        String(task.titulo ?? "").toLowerCase().includes(term) ||
+        String(task.descricao ?? "").toLowerCase().includes(term) ||
+        String(task.comentario ?? "").toLowerCase().includes(term)
+      );
+    }
+    return true;
+  });
+
   function handleExport() {
-    exportCsv(filteredTasks, categoryMeta?.label ?? "tarefas");
+    if (activeView === "historico") {
+      exportCsv(filteredHistory, "historico");
+    } else {
+      exportCsv(filteredTasks, categoryMeta?.label ?? "tarefas");
+    }
   }
 
   if (!session) {
@@ -319,6 +383,7 @@ export default function TaskAdmin() {
               className={item.id === activeCategory ? "menu-item active" : "menu-item"}
               onClick={() => {
                 setActiveCategory(item.id);
+                setActiveView("painel");
                 resetForm();
               }}
             >
@@ -326,6 +391,14 @@ export default function TaskAdmin() {
               <small>{item.desc}</small>
             </button>
           ))}
+          <button
+            type="button"
+            className={activeView === "historico" ? "menu-item active" : "menu-item"}
+            onClick={() => setActiveView("historico")}
+          >
+            <span>Historico</span>
+            <small>Servicos concluidos.</small>
+          </button>
         </div>
         <div className="sidebar-footer">
           <a className="button ghost" href="/">Ver publico</a>
@@ -336,37 +409,94 @@ export default function TaskAdmin() {
       </aside>
 
       <section className="content">
-        <header className="content-header">
-          <div>
-            <h1>{categoryMeta?.label}</h1>
-            <p className="muted">{categoryMeta?.desc}</p>
-          </div>
-          <div className="filters">
-            <input
-              className="input"
-              placeholder="Buscar tarefa..."
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-            <select
-              className="select"
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
-            >
-              <option value="todos">Todos os status</option>
-              {statusOptions.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <button className="button ghost" type="button" onClick={handleExport}>
-              Exportar Excel
-            </button>
-          </div>
-        </header>
+        {activeView === "historico" ? (
+          <header className="content-header">
+            <div>
+              <h1>Historico</h1>
+              <p className="muted">Servicos concluidos com data e horario.</p>
+            </div>
+            <div className="filters">
+              <input
+                className="input"
+                placeholder="Buscar historico..."
+                value={historyQuery}
+                onChange={(event) => setHistoryQuery(event.target.value)}
+              />
+              <select
+                className="select"
+                value={historyCategory}
+                onChange={(event) => setHistoryCategory(event.target.value)}
+              >
+                <option value="todas">Todas as categorias</option>
+                {categories.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="select"
+                value={historyResponsavel}
+                onChange={(event) => setHistoryResponsavel(event.target.value)}
+              >
+                <option value="todos">Todos os responsaveis</option>
+                {responsaveis.map((nome) => (
+                  <option key={nome} value={nome}>
+                    {nome}
+                  </option>
+                ))}
+              </select>
+              <button className="button ghost" type="button" onClick={handleExport}>
+                Exportar Excel
+              </button>
+            </div>
+          </header>
+        ) : (
+          <header className="content-header">
+            <div>
+              <h1>{categoryMeta?.label}</h1>
+              <p className="muted">{categoryMeta?.desc}</p>
+            </div>
+            <div className="filters">
+              <input
+                className="input"
+                placeholder="Buscar tarefa..."
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+              />
+              <select
+                className="select"
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+              >
+                <option value="todos">Todos os status</option>
+                {statusOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="select"
+                value={responsavelFilter}
+                onChange={(event) => setResponsavelFilter(event.target.value)}
+              >
+                <option value="todos">Todos os responsaveis</option>
+                {responsaveis.map((nome) => (
+                  <option key={nome} value={nome}>
+                    {nome}
+                  </option>
+                ))}
+              </select>
+              <button className="button ghost" type="button" onClick={handleExport}>
+                Exportar Excel
+              </button>
+            </div>
+          </header>
+        )}
 
-        <section className="card form-card">
+        {activeView !== "historico" && (
+          <section className="card form-card">
           <div className="form-header">
             <h3>{editing ? "Editar tarefa" : "Nova tarefa"}</h3>
             {editing && (
@@ -376,6 +506,21 @@ export default function TaskAdmin() {
             )}
           </div>
           <form onSubmit={handleCreateOrUpdate} className="grid-2">
+            <div>
+              <label>Responsavel</label>
+              <select
+                className="select"
+                value={form.responsavel}
+                onChange={(event) => setForm({ ...form, responsavel: event.target.value })}
+                required
+              >
+                {responsaveis.map((nome) => (
+                  <option key={nome} value={nome}>
+                    {nome}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div>
               <label>Titulo da tarefa</label>
               <input
@@ -453,27 +598,43 @@ export default function TaskAdmin() {
           </form>
           {message && <p className="muted">{message}</p>}
         </section>
+        )}
 
         <section className="card">
           <div className="list-header">
-            <h3>Tarefas registradas</h3>
-            <span className="muted">{filteredTasks.length} item(ns)</span>
+            <h3>{activeView === "historico" ? "Historico de servicos" : "Tarefas registradas"}</h3>
+            <span className="muted">
+              {activeView === "historico" ? filteredHistory.length : filteredTasks.length} item(ns)
+            </span>
           </div>
-          {filteredTasks.length === 0 && (
-            <p className="muted">Nenhuma tarefa encontrada para esta categoria.</p>
+          {(activeView === "historico" ? filteredHistory.length === 0 : filteredTasks.length === 0) && (
+            <p className="muted">
+              {activeView === "historico"
+                ? "Nenhum servico concluido encontrado."
+                : "Nenhuma tarefa encontrada para esta categoria."}
+            </p>
           )}
           <div className="task-list">
-            {filteredTasks.map((task) => (
+            {(activeView === "historico" ? filteredHistory : filteredTasks).map((task) => (
               <article key={task.id} className="task-card">
                 <div className="task-head">
                   <div>
                     <h4>{task.titulo}</h4>
-                    <p className="muted">Criado em {formatDate(task.created_at)}</p>
+                    <p className="muted">
+                      {activeView === "historico"
+                        ? `Concluido em ${formatDate(task.updated_at ?? task.created_at)}`
+                        : `Criado em ${formatDate(task.created_at)}`}
+                    </p>
                   </div>
                   <span className={`status ${task.status}`}>
                     {statusOptions.find((opt) => opt.id === task.status)?.label ?? "Status"}
                   </span>
                 </div>
+                {task.responsavel && (
+                  <p className="comment">
+                    <strong>Responsavel:</strong> {task.responsavel}
+                  </p>
+                )}
                 {task.descricao && <p>{task.descricao}</p>}
                 {task.comentario && (
                   <p className="comment">
@@ -487,14 +648,16 @@ export default function TaskAdmin() {
                     ))}
                   </div>
                 )}
-                <div className="task-actions">
-                  <button className="button secondary" type="button" onClick={() => handleEdit(task)}>
-                    Editar
-                  </button>
-                  <button className="button ghost" type="button" onClick={() => handleDelete(task.id)}>
-                    Excluir
-                  </button>
-                </div>
+                {activeView !== "historico" && (
+                  <div className="task-actions">
+                    <button className="button secondary" type="button" onClick={() => handleEdit(task)}>
+                      Editar
+                    </button>
+                    <button className="button ghost" type="button" onClick={() => handleDelete(task.id)}>
+                      Excluir
+                    </button>
+                  </div>
+                )}
               </article>
             ))}
           </div>
@@ -522,6 +685,7 @@ function exportCsv(rows, label) {
     "Categoria",
     "Titulo",
     "Descricao",
+    "Responsavel",
     "Comentario",
     "Status",
     "Criado em"
@@ -530,6 +694,7 @@ function exportCsv(rows, label) {
     categoryLabel(row.categoria),
     String(row.titulo ?? ""),
     String(row.descricao ?? ""),
+    String(row.responsavel ?? ""),
     String(row.comentario ?? ""),
     statusLabel(row.status),
     formatDate(row.created_at)

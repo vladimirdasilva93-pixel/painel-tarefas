@@ -36,7 +36,7 @@ export default function PublicTasks() {
     setMessage("");
     const { data, error } = await supabase
       .from("tasks")
-      .select("id, titulo, descricao, comentario, status, categoria, fotos, created_at")
+      .select("id, titulo, descricao, comentario, status, categoria, responsavel, fotos, created_at")
       .eq("categoria", activeCategory)
       .order("created_at", { ascending: false });
 
@@ -148,12 +148,17 @@ export default function PublicTasks() {
                       {statusOptions.find((opt) => opt.id === task.status)?.label ?? "Status"}
                     </span>
                   </div>
-                  {task.descricao && <p>{task.descricao}</p>}
-                  {task.comentario && (
-                    <p className="comment">
-                      <strong>Comentario:</strong> {task.comentario}
-                    </p>
-                  )}
+                {task.descricao && <p>{task.descricao}</p>}
+                {task.responsavel && (
+                  <p className="comment">
+                    <strong>Responsavel:</strong> {task.responsavel}
+                  </p>
+                )}
+                {task.comentario && (
+                  <p className="comment">
+                    <strong>Comentario:</strong> {task.comentario}
+                  </p>
+                )}
                   {Array.isArray(task.fotos) && task.fotos.length > 0 && (
                     <div className="photo-grid">
                       {task.fotos.map((url, index) => (
@@ -190,6 +195,7 @@ function exportCsv(rows, label) {
     "Categoria",
     "Titulo",
     "Descricao",
+    "Responsavel",
     "Comentario",
     "Status",
     "Criado em"
@@ -198,6 +204,7 @@ function exportCsv(rows, label) {
     categoryLabel(row.categoria),
     String(row.titulo ?? ""),
     String(row.descricao ?? ""),
+    String(row.responsavel ?? ""),
     String(row.comentario ?? ""),
     statusLabel(row.status),
     formatDate(row.created_at)

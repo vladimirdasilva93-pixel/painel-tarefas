@@ -6,12 +6,24 @@ create table if not exists public.tasks (
   titulo text not null,
   descricao text,
   comentario text,
+  responsavel text,
   status text not null check (status in ('pendente','em_trabalho','concluido')),
   categoria text not null check (categoria in ('pdv','impressoras','computadores','chamados')),
   fotos text[] default '{}',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- Add responsible field for existing databases
+alter table public.tasks add column if not exists responsavel text;
+update public.tasks
+  set responsavel = 'Vladimir Borges'
+  where responsavel is null;
+alter table public.tasks
+  alter column responsavel set not null;
+alter table public.tasks
+  add constraint tasks_responsavel_check
+  check (responsavel in ('Vladimir Borges','Hugo de Carvalho','Jarlei Coelho'));
 
 alter table public.tasks enable row level security;
 
