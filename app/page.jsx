@@ -19,9 +19,13 @@ const statusOptions = [
 export default function PublicTasks() {
   const [tasks, setTasks] = useState([]);
   const [activeCategory, setActiveCategory] = useState("pdv");
+  const [activeView, setActiveView] = useState("painel");
   const [statusFilter, setStatusFilter] = useState("todos");
   const [query, setQuery] = useState("");
   const [message, setMessage] = useState("");
+  const [historyTasks, setHistoryTasks] = useState([]);
+  const [historyCategory, setHistoryCategory] = useState("todas");
+  const [historyQuery, setHistoryQuery] = useState("");
 
   const categoryMeta = useMemo(
     () => categories.find((item) => item.id === activeCategory),
@@ -29,8 +33,12 @@ export default function PublicTasks() {
   );
 
   useEffect(() => {
-    loadTasks();
-  }, [activeCategory]);
+    if (activeView === "historico") {
+      loadHistory();
+    } else {
+      loadTasks();
+    }
+  }, [activeCategory, activeView, historyCategory]);
 
   async function loadTasks() {
     setMessage("");
@@ -47,6 +55,27 @@ export default function PublicTasks() {
     setTasks(data ?? []);
   }
 
+  async function loadHistory() {
+    setMessage("");
+    let queryBuilder = supabase
+      .from("tasks")
+      .select("id, titulo, descricao, comentario, status, categoria, responsavel, fotos, created_at, updated_at")
+      .eq("status", "concluido")
+      .order("updated_at", { ascending: false });
+
+    if (historyCategory !== "todas") {
+      queryBuilder = queryBuilder.eq("categoria", historyCategory);
+    }
+
+    const { data, error } = await queryBuilder;
+
+    if (error) {
+      setMessage("Nao foi possivel carregar o historico.");
+      return;
+    }
+    setHistoryTasks(data ?? []);
+  }
+
   const filteredTasks = tasks.filter((task) => {
     if (statusFilter !== "todos" && task.status !== statusFilter) return false;
     if (query.trim()) {
@@ -60,8 +89,24 @@ export default function PublicTasks() {
     return true;
   });
 
+  const filteredHistory = historyTasks.filter((task) => {
+    if (historyQuery.trim()) {
+      const term = historyQuery.trim().toLowerCase();
+      return (
+        String(task.titulo ?? "").toLowerCase().includes(term) ||
+        String(task.descricao ?? "").toLowerCase().includes(term) ||
+        String(task.comentario ?? "").toLowerCase().includes(term)
+      );
+    }
+    return true;
+  });
+
   function handleExport() {
-    exportCsv(filteredTasks, categoryMeta?.label ?? "tarefas");
+    if (activeView === "historico") {
+      exportCsv(filteredHistory, "historico");
+    } else {
+      exportCsv(filteredTasks, categoryMeta?.label ?? "tarefas");
+    }
   }
 
   return (
@@ -87,62 +132,116 @@ export default function PublicTasks() {
                 key={item.id}
                 type="button"
                 className={item.id === activeCategory ? "menu-item active" : "menu-item"}
-                onClick={() => setActiveCategory(item.id)}
+                onClick={() => {
+                  setActiveCategory(item.id);
+                  setActiveView("painel");
+                }}
               >
                 <span>{item.label}</span>
                 <small>{item.desc}</small>
               </button>
             ))}
+            <button
+              type="button"
+              className={activeView === "historico" ? "menu-item active" : "menu-item"}
+              onClick={() => setActiveView("historico")}
+            >
+              <span>Historico</span>
+              <small>Servicos concluidos.</small>
+            </button>
           </div>
         </aside>
 
         <section className="public-content">
-          <div className="content-header">
-            <div>
-              <h2>{categoryMeta?.label}</h2>
-              <p className="muted">{categoryMeta?.desc}</p>
+          {activeView === "historico" ? (
+            <div className="content-header">
+              <div>
+                <h2>Historico</h2>
+                <p className="muted">Servicos concluidos com data e horario.</p>
+              </div>
+              <div className="filters">
+                <input
+                  className="input"
+                  placeholder="Buscar historico..."
+                  value={historyQuery}
+                  onChange={(event) => setHistoryQuery(event.target.value)}
+                />
+                <select
+                  className="select"
+                  value={historyCategory}
+                  onChange={(event) => setHistoryCategory(event.target.value)}
+                >
+                  <option value="todas">Todas as categorias</option>
+                  {categories.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <button className="button ghost" type="button" onClick={handleExport}>
+                  Exportar Excel
+                </button>
+              </div>
             </div>
-            <div className="filters">
-              <input
-                className="input"
-                placeholder="Buscar tarefa..."
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-              />
-              <select
-                className="select"
-                value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value)}
-              >
-                <option value="todos">Todos os status</option>
-                {statusOptions.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <button className="button ghost" type="button" onClick={handleExport}>
-                Exportar Excel
-              </button>
+          ) : (
+            <div className="content-header">
+              <div>
+                <h2>{categoryMeta?.label}</h2>
+                <p className="muted">{categoryMeta?.desc}</p>
+              </div>
+              <div className="filters">
+                <input
+                  className="input"
+                  placeholder="Buscar tarefa..."
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                />
+                <select
+                  className="select"
+                  value={statusFilter}
+                  onChange={(event) => setStatusFilter(event.target.value)}
+                >
+                  <option value="todos">Todos os status</option>
+                  {statusOptions.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <button className="button ghost" type="button" onClick={handleExport}>
+                  Exportar Excel
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           <section className="card">
             <div className="list-header">
-              <h3>Tarefas registradas</h3>
-              <span className="muted">{filteredTasks.length} item(ns)</span>
+              <h3>{activeView === "historico" ? "Historico de servicos" : "Tarefas registradas"}</h3>
+              <span className="muted">
+                {activeView === "historico" ? filteredHistory.length : filteredTasks.length} item(ns)
+              </span>
             </div>
             {message && <p className="muted">{message}</p>}
-            {filteredTasks.length === 0 && !message && (
-              <p className="muted">Nenhuma tarefa encontrada para esta categoria.</p>
-            )}
+            {(activeView === "historico" ? filteredHistory.length === 0 : filteredTasks.length === 0) &&
+              !message && (
+                <p className="muted">
+                  {activeView === "historico"
+                    ? "Nenhum servico concluido encontrado."
+                    : "Nenhuma tarefa encontrada para esta categoria."}
+                </p>
+              )}
             <div className="task-list">
-              {filteredTasks.map((task) => (
+              {(activeView === "historico" ? filteredHistory : filteredTasks).map((task) => (
                 <article key={task.id} className="task-card">
                   <div className="task-head">
                     <div>
                       <h4>{task.titulo}</h4>
-                      <p className="muted">Criado em {formatDate(task.created_at)}</p>
+                      <p className="muted">
+                        {activeView === "historico"
+                          ? `Concluido em ${formatDate(task.updated_at ?? task.created_at)}`
+                          : `Criado em ${formatDate(task.created_at)}`}
+                      </p>
                     </div>
                     <span className={`status ${task.status}`}>
                       {statusOptions.find((opt) => opt.id === task.status)?.label ?? "Status"}
