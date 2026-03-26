@@ -115,7 +115,7 @@ export default function PublicTasks() {
         <div>
           <span className="public-badge">Consulta publica</span>
           <div className="public-title">
-            <img src="/vl-logo.png" alt="VL Tecnologia" />
+            <div className="brand-mark brand-text">Gestao TI</div>
             <h1>Painel de Tarefas</h1>
           </div>
           <p className="muted">Visualize as atividades registradas da loja.</p>

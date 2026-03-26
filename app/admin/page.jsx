@@ -63,10 +63,6 @@ export default function TaskAdmin() {
     () => categories.find((item) => item.id === activeCategory),
     [activeCategory]
   );
-  const randomColor = useMemo(() => {
-    const channel = () => Math.floor(Math.random() * 206) + 30;
-    return `rgb(${channel()}, ${channel()}, ${channel()})`;
-  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -376,7 +372,7 @@ export default function TaskAdmin() {
     <main className="dashboard">
       <aside className="sidebar">
         <div className="sidebar-brand">
-          <div className="brand-mark" style={{ background: randomColor }} />
+          <div className="brand-mark brand-text">Gestao TI</div>
           <div>
             <h2>Painel de Tarefas</h2>
             <p className="muted">Acesso unico da equipe</p>

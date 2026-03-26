@@ -121,6 +121,20 @@ textarea {
   object-fit: contain;
 }
 
+.brand-text {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  font-size: 11px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 6px;
+  line-height: 1.1;
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.25), rgba(249, 115, 22, 0.18));
+  color: #1f2937;
+}
+
 .menu {
   display: grid;
   gap: 12px;
