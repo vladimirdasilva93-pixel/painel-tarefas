@@ -68,7 +68,7 @@ export default function PublicTasks() {
           <h1>Painel de Tarefas</h1>
           <p className="muted">Visualize as atividades registradas da loja.</p>
         </div>
-        <a className="button ghost" href="/admin">Acessar area interna</a>
+        <a className="button admin-link" href="/admin">Acesso Administrativo</a>
       </header>
 
       <section className="public-grid">
@@ -157,6 +157,13 @@ export default function PublicTasks() {
           </section>
         </section>
       </section>
+
+      <footer className="site-footer">
+        <span>Marca registrada VL Tecnologia.</span>
+        <a className="footer-link" href="mailto:vladimirdasilva93@gmail.com">
+          Contato: vladimirdasilva93@gmail.com
+        </a>
+      </footer>
     </main>
   );
 }

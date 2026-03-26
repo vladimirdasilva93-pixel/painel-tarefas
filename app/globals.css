@@ -409,6 +409,13 @@ label {
   font-size: clamp(26px, 4vw, 36px);
 }
 
+.admin-link {
+  background: linear-gradient(135deg, var(--accent), #fb7185);
+  color: #0b1220;
+  border: none;
+  font-weight: 700;
+}
+
 .public-badge {
   display: inline-flex;
   align-items: center;
@@ -443,6 +450,31 @@ label {
 .public-content {
   display: grid;
   gap: 24px;
+}
+
+.site-footer {
+  margin-top: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: rgba(11, 18, 32, 0.85);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.footer-link {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.footer-link:hover {
+  color: var(--accent-2);
 }
 
 @media (max-width: 960px) {

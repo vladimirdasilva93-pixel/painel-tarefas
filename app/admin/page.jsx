@@ -490,6 +490,12 @@ export default function TaskAdmin() {
             ))}
           </div>
         </section>
+        <footer className="site-footer">
+          <span>Marca registrada VL Tecnologia.</span>
+          <a className="footer-link" href="mailto:vladimirdasilva93@gmail.com">
+            Contato: vladimirdasilva93@gmail.com
+          </a>
+        </footer>
       </section>
     </main>
   );
