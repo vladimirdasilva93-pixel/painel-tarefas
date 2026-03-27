@@ -451,13 +451,18 @@ label {
   gap: 12px;
 }
 
-.public-title img {
-  width: 48px;
-  height: 48px;
-  object-fit: contain;
-  border-radius: 12px;
-  background: rgba(15, 23, 42, 0.04);
-  padding: 4px;
+.public-title .brand-text {
+  width: 96px;
+  height: 96px;
+  border-radius: 18px;
+}
+
+.public-title .brand-text-top {
+  font-size: 13px;
+}
+
+.public-title .brand-text-bottom {
+  font-size: 26px;
 }
 
 .admin-link {
